@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:fitsSystemWindows="true">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
@@ -22,7 +23,8 @@
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -38,6 +40,7 @@
                 android:textColor="@android:color/darker_gray"
                 android:layout_marginBottom="24dp" />
 
+            <!-- Add Budget Section -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -60,17 +63,28 @@
                         android:textColor="@color/black"
                         android:layout_marginBottom="16dp" />
 
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Select Category"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"
+                        android:layout_marginBottom="8dp" />
+
                     <Spinner
                         android:id="@+id/categorySpinner"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:minHeight="48dp"
-                        android:layout_marginBottom="12dp" />
+                        android:padding="12dp"
+                        android:layout_marginBottom="16dp"
+                        android:background="@android:drawable/editbox_background" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="12dp"
+                        android:layout_marginBottom="16dp"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
                         <com.google.android.material.textfield.TextInputEditText
@@ -91,6 +105,7 @@
 
             </androidx.cardview.widget.CardView>
 
+            <!-- Existing Budgets Section -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -100,22 +115,26 @@
                 android:textColor="@color/black"
                 android:layout_marginBottom="12dp" />
 
+            <!-- RecyclerView for Budgets -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/budgetsRecyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false" />
+                android:nestedScrollingEnabled="false"
+                android:visibility="gone" />
 
+            <!-- No Budgets Message -->
             <TextView
                 android:id="@+id/noBudgetsTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="No budgets set yet"
+                android:text="No budgets set yet. Add your first budget above!"
                 android:textSize="14sp"
                 android:textColor="@android:color/darker_gray"
                 android:layout_gravity="center"
-                android:padding="24dp"
-                android:visibility="gone" />
+                android:textAlignment="center"
+                android:padding="32dp"
+                android:visibility="visible" />
 
         </LinearLayout>
 

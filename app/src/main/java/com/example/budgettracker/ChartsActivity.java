@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import androidx.appcompat.widget.SwitchCompat;
+
 public class ChartsActivity extends AppCompatActivity {
 
     private PieChart expensePieChart, incomePieChart;
@@ -38,6 +40,8 @@ public class ChartsActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private String userId;
+    private boolean showPercentages = true;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +62,14 @@ public class ChartsActivity extends AppCompatActivity {
         expensePieChart = findViewById(R.id.expensePieChart);
         incomePieChart = findViewById(R.id.incomePieChart);
         monthlyTrendChart = findViewById(R.id.monthlyTrendChart);
+
+        SwitchCompat valueModeSwitch = findViewById(R.id.valueModeSwitch);
+        valueModeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            showPercentages = isChecked;
+            buttonView.setText(isChecked ? "Percent" : "Amount");
+            loadExpenseData();
+            loadIncomeData();
+        });
 
         loadExpenseData();
         loadIncomeData();
@@ -84,7 +96,7 @@ public class ChartsActivity extends AppCompatActivity {
                         totals.put(t.getCategory(),
                                 totals.getOrDefault(t.getCategory(), 0f) + (float) t.getAmount());
                     }
-                    displayPieChart(expensePieChart, totals, "No expense data");
+                    displayPieChart(expensePieChart, totals, "No expense data", showPercentages);
                 });
     }
 
@@ -106,7 +118,7 @@ public class ChartsActivity extends AppCompatActivity {
                         totals.put(t.getCategory(),
                                 totals.getOrDefault(t.getCategory(), 0f) + (float) t.getAmount());
                     }
-                    displayPieChart(incomePieChart, totals, "No income data");
+                    displayPieChart(incomePieChart, totals, "No income data", showPercentages);
                 });
     }
 
@@ -144,33 +156,54 @@ public class ChartsActivity extends AppCompatActivity {
 
     // ------------------- PIE CHART DISPLAY -------------------
 
-    private void displayPieChart(PieChart chart, Map<String, Float> data, String emptyText) {
+    private void displayPieChart(PieChart chart,
+                                 Map<String, Float> data,
+                                 String emptyText,
+                                 boolean showPercentages) {
         if (data.isEmpty()) {
             chart.setNoDataText(emptyText);
+            chart.clear();
             chart.invalidate();
             return;
         }
 
         List<PieEntry> entries = new ArrayList<>();
+        float total = 0f;
         for (Map.Entry<String, Float> entry : data.entrySet()) {
-            entries.add(new PieEntry(entry.getValue(), entry.getKey()));
+            float value = entry.getValue();
+            total += value;
+            entries.add(new PieEntry(value, entry.getKey()));
         }
 
         PieDataSet dataSet = new PieDataSet(entries, "");
         dataSet.setColors(getChartColors());
         dataSet.setValueTextSize(12f);
         dataSet.setValueTextColor(Color.WHITE);
-        dataSet.setValueFormatter(new ValueFormatter() {
-            @Override
-            public String getFormattedValue(float value) {
-                return NumberFormat.getCurrencyInstance(Locale.US).format(value);
-            }
-        });
+
+        if (showPercentages) {
+            final float finalTotal = total;
+            dataSet.setValueFormatter(new ValueFormatter() {
+                @Override
+                public String getFormattedValue(float value) {
+                    if (finalTotal == 0f) return "";
+                    float percent = (value / finalTotal) * 100f;
+                    return String.format(Locale.getDefault(), "%.1f%%", percent);
+                }
+            });
+        } else {
+            dataSet.setValueFormatter(new ValueFormatter() {
+                @Override
+                public String getFormattedValue(float value) {
+                    return NumberFormat.getCurrencyInstance(Locale.US).format(value);
+                }
+            });
+        }
 
         PieData pieData = new PieData(dataSet);
         chart.setData(pieData);
+
         chart.getDescription().setEnabled(false);
-        chart.setDrawEntryLabels(true);
+        chart.setDrawEntryLabels(false);
         chart.setEntryLabelTextSize(11f);
         chart.setEntryLabelColor(Color.BLACK);
         chart.setCenterText("Total");

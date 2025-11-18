@@ -7,6 +7,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -43,6 +44,8 @@ public class MainActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
+    private ImageButton refreshRecentButton;
+
     private String userId;
 
     private double totalIncome = 0.0;
@@ -64,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
         userId = currentUser.getUid();
 
         Toolbar toolbar = findViewById(R.id.toolbar);
+        refreshRecentButton = findViewById(R.id.refreshRecentButton);
+
         setSupportActionBar(toolbar);
 
         initializeViews();
@@ -82,6 +87,10 @@ public class MainActivity extends AppCompatActivity {
 
         loadMonthlyData();
         loadRecentTransactions();
+
+        refreshRecentButton.setOnClickListener(v -> {
+            loadRecentTransactions();
+        });
     }
 
     private void initializeViews() {
