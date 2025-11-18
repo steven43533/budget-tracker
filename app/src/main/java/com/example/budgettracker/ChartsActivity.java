@@ -64,61 +64,85 @@ public class ChartsActivity extends AppCompatActivity {
         loadMonthlyTrendData();
     }
 
+    // ------------------- SAFE CHART DATA LOADING -------------------
+
     private void loadExpenseData() {
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.DAY_OF_MONTH, 1);
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
         long monthStart = calendar.getTimeInMillis();
 
         db.collection("transactions")
                 .whereEqualTo("userId", userId)
-                .whereEqualTo("type", "expense")
-                .whereGreaterThanOrEqualTo("timestamp", monthStart)
                 .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    Map<String, Float> categoryTotals = new HashMap<>();
+                .addOnSuccessListener(query -> {
+                    Map<String, Float> totals = new HashMap<>();
+                    for (QueryDocumentSnapshot d : query) {
+                        Transaction t = d.toObject(Transaction.class);
+                        if (!"expense".equals(t.getType())) continue;
+                        if (t.getTimestamp() < monthStart) continue;
 
-                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        Transaction transaction = document.toObject(Transaction.class);
-                        String category = transaction.getCategory();
-                        float amount = (float) transaction.getAmount();
-
-                        categoryTotals.put(category, categoryTotals.getOrDefault(category, 0f) + amount);
+                        totals.put(t.getCategory(),
+                                totals.getOrDefault(t.getCategory(), 0f) + (float) t.getAmount());
                     }
-
-                    displayPieChart(expensePieChart, categoryTotals, "No expense data");
+                    displayPieChart(expensePieChart, totals, "No expense data");
                 });
     }
 
     private void loadIncomeData() {
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.DAY_OF_MONTH, 1);
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
         long monthStart = calendar.getTimeInMillis();
 
         db.collection("transactions")
                 .whereEqualTo("userId", userId)
-                .whereEqualTo("type", "income")
-                .whereGreaterThanOrEqualTo("timestamp", monthStart)
                 .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    Map<String, Float> categoryTotals = new HashMap<>();
+                .addOnSuccessListener(query -> {
+                    Map<String, Float> totals = new HashMap<>();
+                    for (QueryDocumentSnapshot d : query) {
+                        Transaction t = d.toObject(Transaction.class);
+                        if (!"income".equals(t.getType())) continue;
+                        if (t.getTimestamp() < monthStart) continue;
 
-                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        Transaction transaction = document.toObject(Transaction.class);
-                        String category = transaction.getCategory();
-                        float amount = (float) transaction.getAmount();
-
-                        categoryTotals.put(category, categoryTotals.getOrDefault(category, 0f) + amount);
+                        totals.put(t.getCategory(),
+                                totals.getOrDefault(t.getCategory(), 0f) + (float) t.getAmount());
                     }
-
-                    displayPieChart(incomePieChart, categoryTotals, "No income data");
+                    displayPieChart(incomePieChart, totals, "No income data");
                 });
     }
+
+    private void loadMonthlyTrendData() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MONTH, -5);
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+        long sixMonthsAgo = calendar.getTimeInMillis();
+
+        db.collection("transactions")
+                .whereEqualTo("userId", userId)
+                .get()
+                .addOnSuccessListener(query -> {
+                    Map<String, Float> income = new HashMap<>();
+                    Map<String, Float> expenses = new HashMap<>();
+                    SimpleDateFormat fmt = new SimpleDateFormat("MMM", Locale.getDefault());
+
+                    for (QueryDocumentSnapshot d : query) {
+                        Transaction t = d.toObject(Transaction.class);
+                        if (t.getTimestamp() < sixMonthsAgo) continue;
+
+                        String month = fmt.format(t.getDate());
+                        float amount = (float) t.getAmount();
+
+                        if ("income".equals(t.getType())) {
+                            income.put(month, income.getOrDefault(month, 0f) + amount);
+                        } else {
+                            expenses.put(month, expenses.getOrDefault(month, 0f) + amount);
+                        }
+                    }
+
+                    displayLineChart(income, expenses);
+                });
+    }
+
+    // ------------------- PIE CHART DISPLAY -------------------
 
     private void displayPieChart(PieChart chart, Map<String, Float> data, String emptyText) {
         if (data.isEmpty()) {
@@ -136,7 +160,6 @@ public class ChartsActivity extends AppCompatActivity {
         dataSet.setColors(getChartColors());
         dataSet.setValueTextSize(12f);
         dataSet.setValueTextColor(Color.WHITE);
-
         dataSet.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
@@ -166,39 +189,7 @@ public class ChartsActivity extends AppCompatActivity {
         chart.invalidate();
     }
 
-    private void loadMonthlyTrendData() {
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.MONTH, -5);
-        calendar.set(Calendar.DAY_OF_MONTH, 1);
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        long sixMonthsAgo = calendar.getTimeInMillis();
-
-        db.collection("transactions")
-                .whereEqualTo("userId", userId)
-                .whereGreaterThanOrEqualTo("timestamp", sixMonthsAgo)
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    Map<String, Float> monthlyIncome = new HashMap<>();
-                    Map<String, Float> monthlyExpense = new HashMap<>();
-                    SimpleDateFormat monthFormat = new SimpleDateFormat("MMM", Locale.getDefault());
-
-                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        Transaction transaction = document.toObject(Transaction.class);
-                        String month = monthFormat.format(transaction.getDate());
-                        float amount = (float) transaction.getAmount();
-
-                        if (transaction.getType().equals("income")) {
-                            monthlyIncome.put(month, monthlyIncome.getOrDefault(month, 0f) + amount);
-                        } else {
-                            monthlyExpense.put(month, monthlyExpense.getOrDefault(month, 0f) + amount);
-                        }
-                    }
-
-                    displayLineChart(monthlyIncome, monthlyExpense);
-                });
-    }
+    // ------------------- LINE CHART DISPLAY -------------------
 
     private void displayLineChart(Map<String, Float> incomeData, Map<String, Float> expenseData) {
         List<String> months = new ArrayList<>();
@@ -241,9 +232,7 @@ public class ChartsActivity extends AppCompatActivity {
             @Override
             public String getFormattedValue(float value) {
                 int index = (int) value;
-                if (index >= 0 && index < months.size()) {
-                    return months.get(index);
-                }
+                if (index >= 0 && index < months.size()) return months.get(index);
                 return "";
             }
         });
@@ -252,6 +241,8 @@ public class ChartsActivity extends AppCompatActivity {
         monthlyTrendChart.animateX(1000);
         monthlyTrendChart.invalidate();
     }
+
+    // ------------------- HELPER: COLORS -------------------
 
     private int[] getChartColors() {
         return new int[]{
