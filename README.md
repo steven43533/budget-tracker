@@ -5,7 +5,7 @@ Users can register, log in, set up their income and base expenses, and track dai
 
 ---
 
-#### 🔧 Tech Stack
+####  Tech Stack
 
 * **Language:** Java
 * **Database & Auth:** Firebase (Firestore + Authentication)
@@ -14,22 +14,21 @@ Users can register, log in, set up their income and base expenses, and track dai
 
 ---
 
-#### 🧭 Features
+####  Features
 
 * Email/Password authentication (Firebase)
-* Profile setup (age, income, monthly costs)
+* Profile setup (income, monthly costs)
 * Add expenses with categories and notes
 * Dashboard with charts showing income vs. spending
-* Expense history by week or month
 
 ---
 
-#### 🚀 Setup
+#### Setup
 
 1. Clone this repository
 
    ```bash
-   git clone https://github.com/steven43533/personal-budget-app.git
+   git clone https://github.com/steven43533/budget-tracker.git
    ```
 2. Open in **Android Studio**
 3. Add your `google-services.json` from Firebase into the `/app` folder
@@ -37,7 +36,7 @@ Users can register, log in, set up their income and base expenses, and track dai
 
 ---
 
-#### 👥 Team
+#### Team
 
 This project was developed by:
 
